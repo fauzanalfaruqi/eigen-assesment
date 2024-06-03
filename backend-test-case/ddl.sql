@@ -2,6 +2,7 @@ CREATE TABLE member (
 	code varchar(100) NOT NULL PRIMARY KEY,
 	username varchar(100),
     password varchar(255),
+	role varchar(100),
 	total_books_borrowed int,
 	penalized_start_date timestamp,
 	penalized_end_date timestamp,
@@ -10,7 +11,7 @@ CREATE TABLE member (
 	deleted_at timestamp
 );
 
-CREATE  TABLE book (
+CREATE TABLE book (
 	code varchar(100) NOT NULL PRIMARY KEY,
 	title varchar(255),
 	author varchar(100),
