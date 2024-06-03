@@ -22,6 +22,7 @@ func NewBookDelivery(v1Group *gin.RouterGroup, bookUC book.BookUsecase) {
 		bookGroup.GET(":code", handler.getBookByCode)
 		bookGroup.POST("", handler.postBook)
 		bookGroup.POST(":code/borrow", handler.borrowBook)
+		bookGroup.POST(":code/return", handler.returnBook)
 	}
 }
 
@@ -95,11 +96,32 @@ func (delivery *bookDelivery) borrowBook(c *gin.Context) {
 			return
 		}
 
-		json.NewResponseError(c, err.Error(), constants.MemberService, "05")
+		json.NewResponseError(c, err.Error(), constants.BookService, "05")
 		return
 	}
 
-	json.NewResponseCreated(c, nil, "successfully borrow book", constants.BookService, "00")
+	json.NewResponseSuccess(c, nil, "successfully borrow book", constants.BookService, "00")
 }
 
-func (delivery *bookDelivery) returnBook(c *gin.Context)
+func (delivery *bookDelivery) returnBook(c *gin.Context) {
+	code := c.Param("code")
+	var req bookModel.BorrowedBooksLogRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		json.NewResponseError(c, err.Error(), constants.BookService, "01")
+		return
+	}
+
+	err := delivery.bookUsecase.ReturnBook(code, req)
+	if err != nil {
+		if err.Error() == constants.ErrWrongMemberToReturnBook {
+			json.NewResponseBadRequest(c, []json.ValidationField{{FieldName: req.MemberCode, Message: constants.ErrWrongMemberToReturnBook}}, "Bad request", constants.BookService, "02")
+			return
+		}
+
+		json.NewResponseError(c, err.Error(), constants.BookService, "03")
+		return
+	}
+
+	json.NewResponseSuccess(c, nil, "successfully borrow book", constants.BookService, "00")
+}

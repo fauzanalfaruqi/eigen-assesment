@@ -1,1 +1,1 @@
-alias 'air run'='~/.air'
+alias air='~/.air'

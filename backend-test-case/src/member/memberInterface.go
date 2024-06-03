@@ -12,6 +12,7 @@ type MemberRepository interface {
 	RetrieveMemberByName(name string) (memberModel.Member, error)
 	MemberExist(code string) (bool, error)
 	IncreaseBorrowedBooksTotal(code string) error
+	PenalizedMember(code, startDate, endDate string) error
 }
 
 type MemberUsecase interface {

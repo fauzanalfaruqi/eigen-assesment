@@ -65,7 +65,7 @@ func (usecase *bookUsecase) BorrowBook(bookCode string, logReq bookModel.Borrowe
 	// Reduce book stock
 	availableToBorrow, err := usecase.bookRepo.AvailableToBorrow(bookCode)
 	if err != nil {
-		return err
+		return errors.New("1")
 	}
 
 	if !availableToBorrow {
@@ -74,13 +74,13 @@ func (usecase *bookUsecase) BorrowBook(bookCode string, logReq bookModel.Borrowe
 
 	err = usecase.bookRepo.ReduceStock(bookCode)
 	if err != nil {
-		return err
+		return errors.New("2")
 	}
 
 	// Check if member is exist
 	memberExist, err := usecase.memberRepo.MemberExist(logReq.MemberCode)
 	if err != nil {
-		return err
+		return errors.New("3")
 	}
 
 	if !memberExist {
@@ -90,7 +90,7 @@ func (usecase *bookUsecase) BorrowBook(bookCode string, logReq bookModel.Borrowe
 	// Get member data
 	member, err := usecase.memberRepo.RetrieveMember(logReq.MemberCode)
 	if err != nil {
-		return err
+		return errors.New("4")
 	}
 
 	// Check if member already reach max allowed borrow books total
@@ -103,7 +103,7 @@ func (usecase *bookUsecase) BorrowBook(bookCode string, logReq bookModel.Borrowe
 		// Parse PenalizedEndDate
 		penalizedEndDate, err := time.Parse("2006-01-02T15:04:05Z", member.PenalizedEndDate)
 		if err != nil {
-			return err
+			return errors.New("5")
 		}
 
 		// Check if penalizedEndDate is in the future
@@ -115,13 +115,13 @@ func (usecase *bookUsecase) BorrowBook(bookCode string, logReq bookModel.Borrowe
 	// Increase borrowed_books_total value
 	err = usecase.memberRepo.IncreaseBorrowedBooksTotal(logReq.MemberCode)
 	if err != nil {
-		return err
+		return errors.New("6")
 	}
 
 	// Generate borrow log
-	tableEmpty, err := usecase.bookRepo.TableIsEmpty()
+	tableEmpty, err := usecase.bookRepo.LogTableIsEmpty()
 	if err != nil {
-		return err
+		return errors.New("7")
 	}
 
 	logCode, err := usecase.bookRepo.GenerateNewLogCode(tableEmpty)
@@ -146,6 +146,38 @@ func (usecase *bookUsecase) BorrowBook(bookCode string, logReq bookModel.Borrowe
 
 	err = usecase.bookRepo.InsertBorrowLog(log)
 	if err != nil {
+		return errors.New("9")
+	}
+
+	return nil
+}
+
+func (usecase *bookUsecase) ReturnBook(bookCode string, logReq bookModel.BorrowedBooksLogRequest) error {
+	log, err := usecase.bookRepo.RetrieveBorrowLogByBookCode(bookCode)
+	if err != nil {
+		return err
+	}
+
+	if log.MemberCode != logReq.MemberCode {
+		return errors.New(constants.ErrWrongMemberToReturnBook)
+	}
+
+	borrowEndDate, err := time.Parse("2006-01-02 15:04:05", log.BorrowEndDate)
+	if err != nil {
+		return err
+	}
+
+	now := time.Now()
+	penalizedStart := now.Format("2006-01-02 15:04:05")
+	penalizedEnd := now.AddDate(0, 0, 3).Format("2006-01-02 15:04:05")
+
+	if borrowEndDate.Before(time.Now()) {
+		if err := usecase.memberRepo.PenalizedMember(logReq.MemberCode, penalizedStart, penalizedEnd); err != nil {
+			return err
+		}
+	}
+
+	if err = usecase.bookRepo.IncreaseStock(bookCode); err != nil {
 		return err
 	}
 

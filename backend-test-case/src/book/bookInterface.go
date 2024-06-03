@@ -8,10 +8,13 @@ type BookRepository interface {
 	RetrieveBook(code string) (bookModel.Book, error)
 	BookExist(code string) (bool, error)
 	ReduceStock(code string) error
+	IncreaseStock(code string) error
 	AvailableToBorrow(code string) (bool, error)
 	InsertBorrowLog(req bookModel.BorrowedBooksLog) error
-	TableIsEmpty() (bool, error)
+	BookTableIsEmpty() (bool, error)
+	LogTableIsEmpty() (bool, error)
 	GenerateNewLogCode(tableEmpty bool) (string, error)
+	RetrieveBorrowLogByBookCode(bookCode string) (bookModel.BorrowedBooksLog, error)
 }
 
 type BookUsecase interface {
@@ -19,4 +22,5 @@ type BookUsecase interface {
 	GetAvailableBooks() ([]bookModel.Book, error)
 	GetBookByCode(code string) (bookModel.Book, error)
 	BorrowBook(bookCode string, logReq bookModel.BorrowedBooksLogRequest) error
+	ReturnBook(bookCode string, logReq bookModel.BorrowedBooksLogRequest) error
 }

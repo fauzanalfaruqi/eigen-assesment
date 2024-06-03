@@ -119,6 +119,15 @@ func (repo *memberRepository) TableIsEmpty() (bool, error) {
 	return count <= 0, err
 }
 
+func (repo *memberRepository) PenalizedMember(code, startDate, endDate string) error {
+	query :=
+		`UPDATE member SET penalized_start_date = $2, penalized_end_date = $3 WHERE code = $1;`
+
+	_, err := repo.db.Exec(query, code, startDate, endDate)
+
+	return err
+}
+
 func (repo *memberRepository) GenerateNewCode(tableEmpty bool) (string, error) {
 	var maxID string
 

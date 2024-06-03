@@ -4,6 +4,7 @@ import (
 	"backend_test_case/model/bookModel"
 	"backend_test_case/src/book"
 	"database/sql"
+	"errors"
 	"fmt"
 	"strconv"
 )
@@ -86,6 +87,15 @@ func (repo *bookRepository) ReduceStock(code string) error {
 	return err
 }
 
+func (repo *bookRepository) IncreaseStock(code string) error {
+	query :=
+		`UPDATE book SET stock = stock + 1 WHERE code = $1;`
+
+	_, err := repo.db.Exec(query, code)
+
+	return err
+}
+
 func (repo *bookRepository) AvailableToBorrow(code string) (bool, error) {
 	var stock int
 
@@ -96,6 +106,19 @@ func (repo *bookRepository) AvailableToBorrow(code string) (bool, error) {
 
 	return stock > 0, err
 }
+
+func (repo *bookRepository) BookTableIsEmpty() (bool, error) {
+	count := 0
+
+	query :=
+		`SELECT COUNT(*) FROM book;`
+
+	err := repo.db.QueryRow(query).Scan(&count)
+
+	return count <= 0, err
+}
+
+// Borrowed book log
 
 func (repo *bookRepository) InsertBorrowLog(req bookModel.BorrowedBooksLog) error {
 	query :=
@@ -110,11 +133,35 @@ func (repo *bookRepository) InsertBorrowLog(req bookModel.BorrowedBooksLog) erro
 	return nil
 }
 
-func (repo *bookRepository) TableIsEmpty() (bool, error) {
+func (repo *bookRepository) RetrieveBorrowLogByBookCode(bookCode string) (bookModel.BorrowedBooksLog, error) {
+	var log bookModel.BorrowedBooksLog
+	query :=
+		`SELECT code, book_code, member_code, borrow_start_date, borrow_end_date, returned, created_at, updated_at
+		FROM borrowed_books_log WHERE book_code = $1 ORDER BY borrow_end_date DESC LIMIT 1;`
+
+	err := repo.db.QueryRow(query, bookCode).Scan(
+		&log.Code,
+		&log.BookCode,
+		&log.MemberCode,
+		&log.BorrowStartDate,
+		&log.BorrowEndDate,
+		&log.Returned,
+		&log.CreatedAt,
+		&log.UpdatedAt,
+	)
+
+	if err != nil {
+		return bookModel.BorrowedBooksLog{}, err
+	}
+
+	return log, nil
+
+}
+func (repo *bookRepository) LogTableIsEmpty() (bool, error) {
 	count := 0
 
 	query :=
-		`SELECT COUNT(*) FROM book;`
+		`SELECT COUNT(*) FROM borrowed_books_log;`
 
 	err := repo.db.QueryRow(query).Scan(&count)
 
@@ -125,7 +172,7 @@ func (repo *bookRepository) GenerateNewLogCode(tableEmpty bool) (string, error) 
 	var maxID string
 
 	query :=
-		`SELECT MAX(code) FROM total_books_borrowed;`
+		`SELECT MAX(code) FROM borrowed_books_log;`
 
 	if tableEmpty {
 		return "BBL0001", nil
@@ -133,12 +180,12 @@ func (repo *bookRepository) GenerateNewLogCode(tableEmpty bool) (string, error) 
 
 	err := repo.db.QueryRow(query).Scan(&maxID)
 	if err != nil {
-		return "", err
+		return "", errors.New("error gen 1")
 	}
 
 	num, err := strconv.Atoi(maxID[3:])
 	if err != nil {
-		return "", err
+		return "", errors.New("error gen 2")
 	}
 
 	num++
