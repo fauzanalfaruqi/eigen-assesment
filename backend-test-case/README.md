@@ -117,7 +117,53 @@ The test case requirements can be found [here](https://github.com/eigen3dev/back
 	| POST   | Borrow a book                 | /api/v1/books/{:code}/borrow |
 	| POST   | Return a book                 | /api/v1/books/{:code}/return |
 	
-	
+- #### Sample requests
+
+   **Borrow book**
+
+  Method
+
+  ```
+  POST
+  ```
+
+  Endpoint sample
+
+  ```
+  /api/v1/books/JK-45/borrow
+  ```
+
+  Body request sample
+  
+  ```json
+  {
+  	"member_code": "M001"
+  }
+  ```
+  
+  **Return book**
+  
+  Method
+  
+  ```
+  POST
+  ```
+  
+  Endpoint sample
+  
+  ```
+  /api/v1/JK-45/return
+  ```
+  
+  Body request sample
+  
+  ```json
+  {
+      "member_code": "M001"
+  }
+  ```
+  
+  
 
 ## Dependencies
 
