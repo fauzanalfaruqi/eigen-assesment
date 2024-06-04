@@ -108,6 +108,15 @@ func (repo *memberRepository) IncreaseBorrowedBooksTotal(code string) error {
 	return err
 }
 
+func (repo *memberRepository) DecreaseBorrowedBooksTotal(code string) error {
+	query :=
+		`UPDATE member SET total_books_borrowed = total_books_borrowed - 1 WHERE code = $1;`
+
+	_, err := repo.db.Exec(query, code)
+
+	return err
+}
+
 func (repo *memberRepository) TableIsEmpty() (bool, error) {
 	count := 0
 

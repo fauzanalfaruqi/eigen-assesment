@@ -162,19 +162,24 @@ func (usecase *bookUsecase) ReturnBook(bookCode string, logReq bookModel.Borrowe
 		return errors.New(constants.ErrWrongMemberToReturnBook)
 	}
 
-	borrowEndDate, err := time.Parse("2006-01-02 15:04:05", log.BorrowEndDate)
+	borrowEndDate, err := time.Parse("2006-01-02T15:04:05Z", log.BorrowEndDate)
 	if err != nil {
 		return err
 	}
 
 	now := time.Now()
-	penalizedStart := now.Format("2006-01-02 15:04:05")
-	penalizedEnd := now.AddDate(0, 0, 3).Format("2006-01-02 15:04:05")
+	penalizedStart := now.Format("2006-01-02T15:04:05Z")
+	penalizedEnd := now.AddDate(0, 0, 3).Format("2006-01-02T15:04:05Z")
 
 	if borrowEndDate.Before(time.Now()) {
 		if err := usecase.memberRepo.PenalizedMember(logReq.MemberCode, penalizedStart, penalizedEnd); err != nil {
 			return err
 		}
+	}
+
+	err = usecase.memberRepo.DecreaseBorrowedBooksTotal(log.MemberCode)
+	if err != nil {
+		return err
 	}
 
 	if err = usecase.bookRepo.IncreaseStock(bookCode); err != nil {

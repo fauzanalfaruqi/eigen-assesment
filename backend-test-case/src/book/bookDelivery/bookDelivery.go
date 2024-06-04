@@ -123,5 +123,5 @@ func (delivery *bookDelivery) returnBook(c *gin.Context) {
 		return
 	}
 
-	json.NewResponseSuccess(c, nil, "successfully borrow book", constants.BookService, "00")
+	json.NewResponseSuccess(c, nil, "successfully return book", constants.BookService, "00")
 }
